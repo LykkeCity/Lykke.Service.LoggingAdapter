@@ -16,6 +16,8 @@ namespace Lykke.Service.LoggingAdapter.Models
 
         public string EnvInfo { get; set; }
 
+        [Required]
+        [EnumDataType(typeof(LogLevel))]
         public LogLevel LogLevel { get; set; }
 
         public string Component { get; set; }

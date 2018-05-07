@@ -22,6 +22,10 @@ namespace Lykke.Service.LoggingAdapter.Controllers
             _logFactory = logFactory;
         }
 
+        /// <summary>
+        /// Writes log message to preconfigured logger
+        /// </summary>
+        /// <returns></returns>
         [SwaggerOperation("WriteLog")]
         [HttpPost("api/logs")]
         [ProducesResponseType((int)HttpStatusCode.OK)]

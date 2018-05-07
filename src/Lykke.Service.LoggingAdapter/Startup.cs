@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
 
 namespace Lykke.Service.LoggingAdapter
 {
@@ -46,8 +47,8 @@ namespace Lykke.Service.LoggingAdapter
                 services.AddMvc()
                     .AddJsonOptions(options =>
                     {
-                        options.SerializerSettings.ContractResolver =
-                            new Newtonsoft.Json.Serialization.DefaultContractResolver();
+                        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                     });
 
                 services.AddSwaggerGen(options =>
@@ -61,7 +62,7 @@ namespace Lykke.Service.LoggingAdapter
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.LoggingAdapterService), Log));
+                builder.RegisterModule(new ServiceModule( Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
