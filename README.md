@@ -6,8 +6,8 @@ Install .NET Core Runtime https://www.microsoft.com/net/download/windows
 
 Navigate to \src\Lykke.Service.LoggingAdapter in prj folder
 
-Run .. code-block:: bash
-
-	dotnet run --nosettings true
-
+Run 
+```
+dotnet run --nosettings true 
+```
 Open http://localhost:5000/swagger/ui/index.html#!/Logs/WriteLog
