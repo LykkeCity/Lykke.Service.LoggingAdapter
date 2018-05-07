@@ -23,20 +23,22 @@ namespace Lykke.Service.LoggingAdapter
 {
     public class Startup
     {
-        private string _monitoringServiceUrl;
 
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }
-        public IConfigurationRoot Configuration { get; }
+        public IConfiguration Configuration { get; }
         public ILog Log { get; private set; }
 
-        public Startup(IHostingEnvironment env)
+        private bool NoSettings { get; set; }
+
+        public Startup(IHostingEnvironment env, IConfiguration configuration)
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
-
+            
+            Configuration = configuration;
             Environment = env;
         }
 
@@ -57,12 +59,20 @@ namespace Lykke.Service.LoggingAdapter
                 });
 
                 var builder = new ContainerBuilder();
-                var appSettings = Configuration.LoadSettings<AppSettings>();
-                _monitoringServiceUrl = appSettings.CurrentValue.MonitoringServiceClient.MonitoringServiceUrl;
 
-                Log = CreateLogWithSlack(services, appSettings);
+                NoSettings = Configuration.GetSection("NoSettings").Get<bool>();
+                if (NoSettings)
+                {
+                    Log = new LogToConsole();
+                }
+                else
+                {
+                    var appSettings = Configuration.LoadSettings<AppSettings>();
 
-                builder.RegisterModule(new ServiceModule( Log));
+                    Log = CreateLogWithSlack(services, appSettings);
+                }
+
+                builder.RegisterModule(new ServiceModule(Log));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 
@@ -119,8 +129,6 @@ namespace Lykke.Service.LoggingAdapter
                 await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
 
                 await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Started");
-
-                await AutoRegistrationInMonitoring.RegisterAsync(Configuration, _monitoringServiceUrl, Log);
             }
             catch (Exception ex)
             {

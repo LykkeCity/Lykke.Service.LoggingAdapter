@@ -10,7 +10,5 @@ namespace Lykke.Service.LoggingAdapter.Settings
         public LoggingAdapterSettings LoggingAdapterService { get; set; }
 
         public SlackNotificationsSettings SlackNotifications { get; set; }
-
-        public MonitoringServiceClientSettings MonitoringServiceClient { get; set; }
     }
 }
