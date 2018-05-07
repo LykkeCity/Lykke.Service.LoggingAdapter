@@ -6,8 +6,5 @@ Lightweight adapter of Lykke logging system
 
 2. Navigate to \src\Lykke.Service.LoggingAdapter in prj folder
 
-3. Run 
-```
-dotnet run --nosettings true 
-```
+3. Run ```dotnet run --nosettings true ```
 4. Open http://localhost:5000/swagger/ui/index.html#!/Logs/WriteLog
