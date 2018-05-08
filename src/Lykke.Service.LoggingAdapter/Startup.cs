@@ -50,7 +50,7 @@ namespace Lykke.Service.LoggingAdapter
                     .AddJsonOptions(options =>
                     {
                         options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
+                        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter(){CamelCaseText = true});
                     });
 
                 services.AddSwaggerGen(options =>
