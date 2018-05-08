@@ -6,7 +6,7 @@ using Lykke.Service.LoggingAdapter.Core.Services;
 
 namespace Lykke.Service.LoggingAdapter.Services
 {
-    public class LogFactory:ILogFactory
+    public class LogToConsoleLogFactory:ILogFactory
     {
         public ILog GetLog(string appName)
         {

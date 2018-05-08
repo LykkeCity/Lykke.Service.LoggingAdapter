@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
 
-namespace Lykke.Service.LoggingAdapter.Models
+namespace Lykke.Service.LoggingAdapter.Contracts.Log
 {
     public class LogRequest:IValidatableObject
     {

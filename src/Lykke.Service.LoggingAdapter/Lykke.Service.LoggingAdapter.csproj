@@ -44,6 +44,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\..\contract\Lykke.Service.LoggingAdapter.Contracts\Lykke.Service.LoggingAdapter.Contracts.csproj" />
     <ProjectReference Include="..\Lykke.Service.LoggingAdapter.AzureRepositories\Lykke.Service.LoggingAdapter.AzureRepositories.csproj" />
     <ProjectReference Include="..\Lykke.Service.LoggingAdapter.Core\Lykke.Service.LoggingAdapter.Core.csproj" />
     <ProjectReference Include="..\Lykke.Service.LoggingAdapter.Services\Lykke.Service.LoggingAdapter.Services.csproj" />

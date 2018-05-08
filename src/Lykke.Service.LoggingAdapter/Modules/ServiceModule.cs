@@ -45,7 +45,7 @@ namespace Lykke.Service.LoggingAdapter.Modules
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>();
 
-            builder.RegisterType<LogFactory>()
+            builder.RegisterType<LogToConsoleLogFactory>()
                 .As<ILogFactory>();
             
             builder.Populate(_services);

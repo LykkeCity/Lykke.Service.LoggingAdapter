@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Service.LoggingAdapter.Contracts.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Helpers;
-using Lykke.Service.LoggingAdapter.Models;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -15,11 +16,13 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 {
     public class LogsController:Controller
     {
-        private ILogFactory _logFactory;
+        private readonly ILogFactory _logFactory;
+        private readonly ILog _log;
 
-        public LogsController(ILogFactory logFactory)
+        public LogsController(ILogFactory logFactory, ILog log)
         {
             _logFactory = logFactory;
+            _log = log;
         }
 
         /// <summary>
@@ -42,6 +45,9 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 
             if (log == null)
             {
+                await _log.WriteWarningAsync(nameof(LogsController), nameof(Write), request.ToJson(),
+                    $"Logger for {request.AppName} not found");
+
                 return BadRequest(ErrorResponse.Create($"Log for  appName {request.AppName} not found"));
             }
 

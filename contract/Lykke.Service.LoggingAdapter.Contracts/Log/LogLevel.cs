@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Service.LoggingAdapter.Models
+﻿namespace Lykke.Service.LoggingAdapter.Contracts.Log
 {
     public enum LogLevel
     {
