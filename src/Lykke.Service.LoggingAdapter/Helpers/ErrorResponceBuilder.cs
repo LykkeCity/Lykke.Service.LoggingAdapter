@@ -11,7 +11,7 @@ namespace Lykke.Service.LoggingAdapter.Helpers
     {
         public static ErrorResponse CreateErrorResponce(this ModelStateDictionary modelState)
         {
-            var response = new ErrorResponse();
+            var response = new ErrorResponse() {ModelErrors = new Dictionary<string, List<string>>()};
 
             foreach (var state in modelState)
             {
