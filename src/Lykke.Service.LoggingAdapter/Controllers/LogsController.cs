@@ -25,10 +25,18 @@ namespace Lykke.Service.LoggingAdapter.Controllers
             _log = log;
         }
 
+        [Consumes("application/x-www-form-urlencoded")]
+        [HttpPost("api/logs")]
+        public Task<IActionResult> WriteFromForm([FromForm] LogRequest request)
+        {
+            return Write(request);
+        }
+
         /// <summary>
         /// Writes log message to preconfigured logger
         /// </summary>
         /// <returns></returns>
+        [Consumes("application/json")]
         [SwaggerOperation("WriteLog")]
         [HttpPost("api/logs")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
