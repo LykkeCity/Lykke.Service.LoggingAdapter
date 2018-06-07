@@ -17,10 +17,10 @@ namespace Lykke.Service.LoggingAdapter.Controllers
         private readonly ILog _log;
         private static Func<LogEntryParameters, Exception, string> _defaultMessageFormatter = (parameters, exception) => parameters.Message;
 
-        public LogsController(ILoggerSelector loggerSelector, ILog log)
+        public LogsController(ILoggerSelector loggerSelector, ILogFactory logFactory)
         {
             _loggerSelector = loggerSelector;
-            _log = log;
+            _log = logFactory.CreateLog(this);
         }
 
         [ApiExplorerSettings(IgnoreApi = true)]
@@ -72,7 +72,7 @@ namespace Lykke.Service.LoggingAdapter.Controllers
                     request.EnvInfo, 
                     request.CallerFilePath ?? "?", 
                     request.Process, 
-                    request.CallerLineNumber ?? 1, 
+                    request.CallerLineNumber > 0 ? request.CallerLineNumber.Value : 1, 
                     request.Message,
                     request.Context,
                     DateTime.UtcNow), 
