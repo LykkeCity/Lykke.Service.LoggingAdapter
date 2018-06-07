@@ -4,9 +4,14 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
+using Lykke.Common.Log;
 using Lykke.Logs;
+using Lykke.Logs.Loggers.LykkeAzureTable;
+using Lykke.Logs.Loggers.LykkeConsole;
+using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Settings;
 using Lykke.Service.LoggingAdapter.Modules;
@@ -28,6 +33,7 @@ namespace Lykke.Service.LoggingAdapter
         public IContainer ApplicationContainer { get; private set; }
         public IConfiguration Configuration { get; }
         public ILog Log { get; private set; }
+        private IHealthNotifier HealthNotifier { get; set; }
 
         private bool NoSettings { get; set; }
 
@@ -63,24 +69,40 @@ namespace Lykke.Service.LoggingAdapter
                 NoSettings = Configuration.GetSection("NoSettings").Get<bool>();
                 if (NoSettings)
                 {
-                    Log = new LogToConsole();
+                    //TODO - register in DI
+                    Log = DirectConsoleLogFactory.Instance.CreateLog(this);
                 }
                 else
                 {
                     var appSettings = Configuration.LoadSettings<AppSettings>();
 
-                    Log = CreateLogWithSlack(services, appSettings);
+
+                    services.AddLykkeHealthNotifications(
+                        appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+                        appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName);
+
+                    services.AddLykkeLogging(logging =>
+                    {
+                        logging.AddLykkeConsole();
+                        logging.AddLykkeAzureTable(appSettings.ConnectionString(x => x.LoggingAdapterService.Db.LogsConnString), "LoggingAdapter" + Program.EnvInfo);
+                        logging.AddLykkeEssentialSlackChannels(
+                            appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+                            appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName);
+                    });
+
                 }
 
-                builder.RegisterModule(new ServiceModule(Log));
                 builder.Populate(services);
+                builder.RegisterModule(new ServiceModule());
                 ApplicationContainer = builder.Build();
 
+                Log = ApplicationContainer.Resolve<ILogFactory>().CreateLog(this);
+                HealthNotifier = ApplicationContainer.Resolve<IHealthNotifier>();
                 return new AutofacServiceProvider(ApplicationContainer);
             }
             catch (Exception ex)
             {
-                Log?.WriteFatalError(nameof(Startup), nameof(ConfigureServices), ex);
+                Log?.Critical(ex);
                 throw;
             }
         }
@@ -95,7 +117,7 @@ namespace Lykke.Service.LoggingAdapter
                 }
 
                 app.UseLykkeForwardedHeaders();
-                app.UseLykkeMiddleware("LoggingAdapter", ex => new { Message = "Technical problem" });
+                app.UseLykkeMiddleware(ex => ErrorResponse.Create("Technical problem"));
 
                 app.UseMvc();
                 app.UseSwagger(c =>
@@ -115,7 +137,7 @@ namespace Lykke.Service.LoggingAdapter
             }
             catch (Exception ex)
             {
-                Log?.WriteFatalError(nameof(Startup), nameof(Configure), ex);
+                Log?.Critical(ex);
                 throw;
             }
         }
@@ -128,11 +150,12 @@ namespace Lykke.Service.LoggingAdapter
 
                 await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
 
-                await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Started");
+                HealthNotifier.Notify($"Env: {Program.EnvInfo} started");
             }
             catch (Exception ex)
             {
-                await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StartApplication), "", ex);
+                Log?.Error(nameof(StartApplication), ex);
+
                 throw;
             }
         }
@@ -147,10 +170,8 @@ namespace Lykke.Service.LoggingAdapter
             }
             catch (Exception ex)
             {
-                if (Log != null)
-                {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(StopApplication), "", ex);
-                }
+                Log?.Error(nameof(StopApplication), ex);
+
                 throw;
             }
         }
@@ -163,7 +184,7 @@ namespace Lykke.Service.LoggingAdapter
 
                 if (Log != null)
                 {
-                    await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Terminating");
+                    HealthNotifier.Notify($"Env: {Program.EnvInfo} Terminating");
                 }
 
                 ApplicationContainer.Dispose();
@@ -172,56 +193,11 @@ namespace Lykke.Service.LoggingAdapter
             {
                 if (Log != null)
                 {
-                    await Log.WriteFatalErrorAsync(nameof(Startup), nameof(CleanUp), "", ex);
+                    Log.Critical(ex);
                     (Log as IDisposable)?.Dispose();
                 }
                 throw;
             }
-        }
-
-        private static ILog CreateLogWithSlack(IServiceCollection services, IReloadingManager<AppSettings> settings)
-        {
-            var consoleLogger = new LogToConsole();
-            var aggregateLogger = new AggregateLogger();
-
-            aggregateLogger.AddLog(consoleLogger);
-
-            var dbLogConnectionStringManager = settings.Nested(x => x.LoggingAdapterService.Db.LogsConnString);
-            var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
-
-            if (string.IsNullOrEmpty(dbLogConnectionString))
-            {
-                consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
-                return aggregateLogger;
-            }
-
-            if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
-                throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
-
-            var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
-                AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "LoggingAdapterLog", consoleLogger),
-                consoleLogger);
-
-            // Creating slack notification service, which logs own azure queue processing messages to aggregate log
-            var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
-            {
-                ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
-            }, aggregateLogger);
-
-            var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
-
-            // Creating azure storage logger, which logs own messages to concole log
-            var azureStorageLogger = new LykkeLogToAzureStorage(
-                persistenceManager,
-                slackNotificationsManager,
-                consoleLogger);
-
-            azureStorageLogger.Start();
-
-            aggregateLogger.AddLog(azureStorageLogger);
-
-            return aggregateLogger;
         }
     }
 }

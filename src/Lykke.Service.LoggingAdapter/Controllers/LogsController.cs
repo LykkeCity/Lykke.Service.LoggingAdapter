@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Common;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Contracts.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Helpers;
@@ -16,18 +13,20 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 {
     public class LogsController:Controller
     {
-        private readonly ILogFactory _logFactory;
+        private readonly ILoggerSelector _loggerSelector;
         private readonly ILog _log;
+        private static Func<LogEntryParameters, Exception, string> _defaultMessageFormatter = (parameters, exception) => parameters.Message;
 
-        public LogsController(ILogFactory logFactory, ILog log)
+        public LogsController(ILoggerSelector loggerSelector, ILog log)
         {
-            _logFactory = logFactory;
+            _loggerSelector = loggerSelector;
             _log = log;
         }
 
+        [ApiExplorerSettings(IgnoreApi = true)]
         [Consumes("application/x-www-form-urlencoded")]
         [HttpPost("api/logs")]
-        public Task<IActionResult> WriteFromForm([FromForm] LogRequest request)
+        public IActionResult WriteFromForm([FromForm] LogRequest request)
         {
             return Write(request);
         }
@@ -42,70 +41,43 @@ namespace Lykke.Service.LoggingAdapter.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.BadRequest)]
         [ProducesResponseType(typeof(ErrorResponse), (int)HttpStatusCode.InternalServerError)]
-        public async Task<IActionResult> Write([FromBody]LogRequest request)
+        public IActionResult Write([FromBody]LogRequest request)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState.CreateErrorResponce());
             }
 
-            var log = _logFactory.GetLog(request.AppName);
+            var component = request.Component ?? request.AppName;
+            var log = _loggerSelector.GetLog(request.AppName, component);
 
             if (log == null)
             {
-                await _log.WriteWarningAsync(nameof(LogsController), nameof(Write), request.ToJson(),
-                    $"Logger for {request.AppName} not found");
-
+                _log.Warning(nameof(Write),  $"Logger for {request.AppName} not found", context: request);
+                
                 return BadRequest(ErrorResponse.Create($"Log for  appName {request.AppName} not found"));
             }
 
-            var mockException = new Exception($"{request.ExceptionType} : {request.Message} : {request.CallStack}");
-            var component = request.Component ?? request.AppName;
-            //Todo refact Lykke Logs
-            switch (request.LogLevel)
+            Exception mockException = null;
+            if (!string.IsNullOrEmpty(request.ExceptionType) || !string.IsNullOrEmpty(request.CallStack))
             {
-                case LogLevel.FatalError:
-                {
-                    await log.WriteFatalErrorAsync(component,
-                        request.Process,
-                        request.Context,
-                        mockException);
-                    break;
-                }
-                case LogLevel.Error:
-                {
-                    await log.WriteErrorAsync(component, 
-                        request.Process,
-                        request.Context,
-                        mockException);
-                    break;
-                }
-                case LogLevel.Warning:
-                {
-                    await log.WriteWarningAsync(component, 
-                        request.Process, 
-                        request.Context,
-                        request.Message, 
-                        mockException);
-                    break;
-                }
-                case LogLevel.Monitor:
-                {
-                    await log.WriteMonitorAsync(component,
-                        request.Process,
-                        request.Context,
-                        request.Message);
-                    break;
-                }
-                case LogLevel.Info:
-                {
-                    await log.WriteInfoAsync(component,
-                        request.Process,
-                        request.Context,
-                        request.Message);
-                    break;
-                }
+                mockException = new Exception($"{request.ExceptionType} : {request.CallStack}");
             }
+
+
+            log.Log(request.LogLevel.MapToMicrosoftLoglevel(),
+                0,
+                new LogEntryParameters(request.AppName, 
+                    request.AppVersion, 
+                    request.EnvInfo, 
+                    request.CallerFilePath ?? "?", 
+                    request.Process, 
+                    request.CallerLineNumber ?? 1, 
+                    request.Message,
+                    request.Context,
+                    DateTime.UtcNow), 
+                mockException,
+                _defaultMessageFormatter);
 
             return Ok();
         }

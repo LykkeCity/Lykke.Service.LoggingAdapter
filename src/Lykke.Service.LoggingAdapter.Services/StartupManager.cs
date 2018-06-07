@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Service.LoggingAdapter.Services
 {
@@ -15,9 +17,9 @@ namespace Lykke.Service.LoggingAdapter.Services
     {
         private readonly ILog _log;
 
-        public StartupManager(ILog log)
+        public StartupManager(ILogFactory loggerFactory)
         {
-            _log = log;
+            _log = loggerFactory.CreateLog(this);
         }
 
         public async Task StartAsync()

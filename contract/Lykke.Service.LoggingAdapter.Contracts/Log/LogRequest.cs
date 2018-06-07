@@ -21,6 +21,16 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
 
         public string Process { get; set; }
 
+        /// <summary>
+        /// Source code file line number, where the entry was made.
+        /// </summary>
+        public int? CallerLineNumber { get; set; }
+
+        /// <summary>
+        /// Path of the source code file, where the entry was made. 
+        /// </summary>
+        public string CallerFilePath { get; set; }
+
         public string Context { get; set; }
 
         public string Message { get; set; }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Common;
 using Common.Log;
+using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 
 namespace Lykke.Service.LoggingAdapter.Services
@@ -17,9 +18,9 @@ namespace Lykke.Service.LoggingAdapter.Services
         private readonly ILog _log;
         private readonly IEnumerable<IStopable> _items;
 
-        public ShutdownManager(ILog log, IEnumerable<IStopable> items)
+        public ShutdownManager(ILogFactory logFactory, IEnumerable<IStopable> items)
         {
-            _log = log;
+            _log = logFactory.CreateLog(this);
             _items = items;
         }
 

@@ -5,8 +5,8 @@ using Common.Log;
 
 namespace Lykke.Service.LoggingAdapter.Core.Services
 {
-    public interface ILogFactory
+    public interface ILoggerSelector
     {
-        ILog GetLog(string appName);
+        ILog GetLog(string appName, string component);
     }
 }
