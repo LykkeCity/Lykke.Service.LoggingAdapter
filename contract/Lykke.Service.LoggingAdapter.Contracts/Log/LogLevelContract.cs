@@ -2,7 +2,7 @@
 
 namespace Lykke.Service.LoggingAdapter.Contracts.Log
 {
-    public enum LogLevel
+    public enum LogLevelContract
     {
         Info,
         Warning,

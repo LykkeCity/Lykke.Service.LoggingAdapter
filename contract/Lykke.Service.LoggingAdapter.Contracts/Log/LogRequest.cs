@@ -14,8 +14,8 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
         public string EnvInfo { get; set; }
 
         [Required]
-        [EnumDataType(typeof(LogLevel))]
-        public LogLevel LogLevel { get; set; }
+        [EnumDataType(typeof(LogLevelContract))]
+        public LogLevelContract? LogLevel { get; set; }
 
         public string Component { get; set; }
 
@@ -43,24 +43,31 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
 
         #region Validation
 
-        private static readonly HashSet<LogLevel> NormalLogLevels = new HashSet<LogLevel>
+        private static readonly HashSet<LogLevelContract> NormalLogLevels = new HashSet<LogLevelContract>
         {
-            LogLevel.Info,
-            LogLevel.Warning,
-            LogLevel.Monitor
+            LogLevelContract.Info,
+            LogLevelContract.Warning,
+            LogLevelContract.Monitor
         };
 
-        private static readonly HashSet<LogLevel> ErrorLogLevels = new HashSet<LogLevel>
+        private static readonly HashSet<LogLevelContract> ErrorLogLevels = new HashSet<LogLevelContract>
         {
-            LogLevel.Error,
-            LogLevel.FatalError
+            LogLevelContract.Error,
+            LogLevelContract.FatalError
         };
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var result = new List<ValidationResult>();
+
+            if (LogLevel == null)
+            {
+                result.Add(new ValidationResult("Log Level field is required", new[] { nameof(LogLevel) }));
+
+                return result;
+            }
             
-            if (NormalLogLevels.Contains(LogLevel))
+            if (NormalLogLevels.Contains(LogLevel.Value))
             {
                 if (string.IsNullOrEmpty(Message))
                 {
@@ -68,7 +75,7 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
                 }
             }
 
-            if (ErrorLogLevels.Contains(LogLevel))
+            if (ErrorLogLevels.Contains(LogLevel.Value))
             {
                 if (string.IsNullOrEmpty(CallStack))
                 {

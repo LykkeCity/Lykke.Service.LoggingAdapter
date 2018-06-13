@@ -8,20 +8,22 @@ namespace Lykke.Service.LoggingAdapter.Helpers
 {
     public static class LogLevelHelper
     {
-        public static Microsoft.Extensions.Logging.LogLevel MapToMicrosoftLoglevel(this LogLevel logLevel)
+        public static Microsoft.Extensions.Logging.LogLevel MapToMicrosoftLoglevel(this LogLevelContract logLevel)
         {
             switch (logLevel)
             {
-                case LogLevel.Info:
+                case LogLevelContract.Info:
                     return Microsoft.Extensions.Logging.LogLevel.Information;
-                case LogLevel.Error:
+                case LogLevelContract.Error:
                     return Microsoft.Extensions.Logging.LogLevel.Error;
-                case LogLevel.Warning:
+                case LogLevelContract.Warning:
                     return Microsoft.Extensions.Logging.LogLevel.Warning;
-                case LogLevel.FatalError:
+                case LogLevelContract.Monitor:
+                    return Microsoft.Extensions.Logging.LogLevel.Warning;
+                case LogLevelContract.FatalError:
                     return Microsoft.Extensions.Logging.LogLevel.Critical;
                 default:
-                    throw new InvalidEnumArgumentException(nameof(logLevel), (int)logLevel, typeof(LogLevel));
+                    throw new InvalidEnumArgumentException(nameof(logLevel), (int)logLevel, typeof(LogLevelContract));
             }
         }
     }

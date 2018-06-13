@@ -63,14 +63,15 @@ namespace Lykke.Service.LoggingAdapter.Controllers
                 mockException = new Exception($"{request.ExceptionType} : {request.CallStack}");
             }
 
-
-            log.Log(request.LogLevel.MapToMicrosoftLoglevel(),
+            //null check is in validation of LogRequest
+            // ReSharper disable once PossibleInvalidOperationException
+            log.Log(request.LogLevel.Value.MapToMicrosoftLoglevel(),
                 0,
                 new LogEntryParameters(request.AppName, 
                     request.AppVersion, 
-                    request.EnvInfo, 
+                    request.EnvInfo ?? "?", 
                     request.CallerFilePath ?? "?", 
-                    request.Process, 
+                    request.Process ?? "?", 
                     request.CallerLineNumber > 0 ? request.CallerLineNumber.Value : 1, 
                     request.Message,
                     request.Context,
