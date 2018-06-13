@@ -10,6 +10,8 @@ namespace Lykke.Service.LoggingAdapter.Settings
         [AzureTableCheck]
         public string ConnString { get; set; }
 
+        public string TableName { get; set; }
+
         public string AppName { get; set; }
     }
 }

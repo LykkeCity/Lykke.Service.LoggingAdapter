@@ -57,6 +57,7 @@ namespace Lykke.Service.LoggingAdapter.Modules
                     {
                         AppName = logSettingsReloadingManager.CurrentValue.AppName,
                         ConnectionString = logSettingsReloadingManager.Nested(p => p.ConnString),
+                        TableName =  logSettingsReloadingManager.CurrentValue.TableName,
                         SlackNotificationsConnectionString = _appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
                         SlackNotificationsQueueName = _appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName
                     });

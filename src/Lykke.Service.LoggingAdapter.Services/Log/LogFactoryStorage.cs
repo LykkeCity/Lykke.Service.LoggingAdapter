@@ -33,7 +33,7 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
         {
             return LogFactory.Create()
                 .AddConsole()
-                .AddAzureTable(settings.ConnectionString, $"Log{settings.AppName}")
+                .AddAzureTable(settings.ConnectionString, settings.TableName)
                 .AddEssentialSlackChannels(settings.SlackNotificationsConnectionString, settings.SlackNotificationsQueueName);
         }
 
