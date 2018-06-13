@@ -15,7 +15,6 @@ namespace Lykke.Service.LoggingAdapter.Controllers
     {
         private readonly ILoggerSelector _loggerSelector;
         private readonly ILog _log;
-        private static Func<LogEntryParameters, Exception, string> _defaultMessageFormatter = (parameters, exception) => parameters.Message;
 
         public LogsController(ILoggerSelector loggerSelector, ILogFactory logFactory)
         {
@@ -77,7 +76,7 @@ namespace Lykke.Service.LoggingAdapter.Controllers
                     request.Context,
                     DateTime.UtcNow), 
                 mockException,
-                _defaultMessageFormatter);
+                (p, e) => p.Message);
 
             return Ok();
         }

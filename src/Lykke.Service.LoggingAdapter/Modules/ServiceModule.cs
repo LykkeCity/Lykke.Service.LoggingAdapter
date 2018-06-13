@@ -1,34 +1,29 @@
-﻿using Autofac;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
-using Lykke.Service.LoggingAdapter.Settings.ServiceSettings;
 using Lykke.Service.LoggingAdapter.Services;
+using Lykke.Service.LoggingAdapter.Services.Log;
+using Lykke.Service.LoggingAdapter.Settings;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Lykke.Service.LoggingAdapter.Modules
 {
     public class ServiceModule : Module
     {
-        // NOTE: you can remove it if you don't need to use IServiceCollection extensions to register service specific dependencies
         private readonly IServiceCollection _services;
+        private readonly IReloadingManager<AppSettings> _appSettings;
 
-        public ServiceModule()
+        public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
+            _appSettings = appSettings;
             _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
         {
-            // TODO: Do not register entire settings in container, pass necessary settings to services which requires them
-            // ex:
-            //  builder.RegisterType<QuotesPublisher>()
-            //      .As<IQuotesPublisher>()
-            //      .WithParameter(TypedParameter.From(_settings.CurrentValue.QuotesPublication))
-            
-
             builder.RegisterType<HealthService>()
                 .As<IHealthService>()
                 .SingleInstance();
@@ -39,10 +34,37 @@ namespace Lykke.Service.LoggingAdapter.Modules
             builder.RegisterType<ShutdownManager>()
                 .As<IShutdownManager>();
 
+            RegisterLoggerFactoryStorage(builder);
+
             builder.RegisterType<LoggerSelector>()
                 .As<ILoggerSelector>();
             
             builder.Populate(_services);
+        }
+
+        private void RegisterLoggerFactoryStorage(ContainerBuilder builder)
+        {
+            var configuredLoggersCount = _appSettings.CurrentValue.LoggingAdapterService.Loggers.Count();
+
+            var builderSettings = new List<LoggerBuilderSettings>();
+
+            for (var i = 0; i < configuredLoggersCount; i++)
+            {
+                var captured = i;
+                var logSettingsReloadingManager = _appSettings.Nested(p => p.LoggingAdapterService.Loggers.Skip(captured).First());
+                builderSettings.Add(
+                    new LoggerBuilderSettings
+                    {
+                        AppName = logSettingsReloadingManager.CurrentValue.AppName,
+                        ConnectionString = logSettingsReloadingManager.Nested(p => p.ConnString),
+                        SlackNotificationsConnectionString = _appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+                        SlackNotificationsQueueName = _appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName
+                    });
+            }
+
+            var storageInstance = new LogFactoryStorage(builderSettings);
+
+            builder.RegisterInstance(storageInstance).As<ILogFactoryStorage>();
         }
     }
 }

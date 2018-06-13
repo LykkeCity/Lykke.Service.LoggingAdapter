@@ -28,14 +28,6 @@ namespace Lykke.Service.LoggingAdapter
                     .UseKestrel()
                     .UseUrls("http://*:5000")
                     .UseContentRoot(Directory.GetCurrentDirectory())
-                    .ConfigureAppConfiguration((hostingContext, config) =>
-                    {
-                        var env = hostingContext.HostingEnvironment;
-                        
-                        config.SetBasePath(env.ContentRootPath)
-                            .AddEnvironmentVariables()
-                            .AddCommandLine(args);
-                    })
                     .UseStartup<Startup>()
                     .UseApplicationInsights()
                     .Build();

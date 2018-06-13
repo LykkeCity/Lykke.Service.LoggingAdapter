@@ -8,9 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Lykke.Common" Version="7.0.0-beta.12" />
+    <PackageReference Include="Lykke.Common" Version="7.0.0-beta.15" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="2.0.0-beta" />
-    <PackageReference Include="Lykke.Logs" Version="4.4.0-beta.11" />
+    <PackageReference Include="Lykke.Logs" Version="4.4.0-beta.26" />
   </ItemGroup>
 
   <ItemGroup>

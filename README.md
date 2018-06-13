@@ -10,17 +10,6 @@ You need to install .NET Core runtime (https://www.microsoft.com/net/download) o
 ## How to build and run the service
 To run service in production mode you need provide access to json settings. The apps should read settings from the URL or local file specified in the SettingsUrl environment variable.
 
-Beside you can run service locally without settings
-
-## How to run service without settings
-1. Install .NET Core Runtime https://www.microsoft.com/net/download
-
-2. Navigate to \src\Lykke.Service.LoggingAdapter in prj folder
-
-3. Run ```dotnet run --nosettings true ```
-4. Open http://localhost:5000/swagger/ui/index.html#!/Logs/WriteLog
-
-
 ## Endpont Specification
 
 Service exposes OpenAPI specification, based on swagger (https://swagger.io/)

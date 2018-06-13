@@ -1,4 +1,5 @@
-﻿using JetBrains.Annotations;
+﻿using System.Collections.Generic;
+using JetBrains.Annotations;
 
 namespace Lykke.Service.LoggingAdapter.Settings.ServiceSettings
 {
@@ -6,5 +7,7 @@ namespace Lykke.Service.LoggingAdapter.Settings.ServiceSettings
     public class LoggingAdapterSettings
     {
         public DbSettings Db { get; set; }
+
+        public IEnumerable<LogSettings> Loggers { get; set; }
     }
 }

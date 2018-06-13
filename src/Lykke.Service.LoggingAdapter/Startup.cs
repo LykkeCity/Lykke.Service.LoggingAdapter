@@ -2,22 +2,16 @@
 using System.Threading.Tasks;
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using AzureStorage.Tables;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Common.Log;
 using Lykke.Logs;
-using Lykke.Logs.Loggers.LykkeAzureTable;
-using Lykke.Logs.Loggers.LykkeConsole;
-using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Settings;
 using Lykke.Service.LoggingAdapter.Modules;
 using Lykke.SettingsReader;
-using Lykke.SlackNotification.AzureQueue;
-using Lykke.MonitoringServiceApiCaller;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -34,9 +28,7 @@ namespace Lykke.Service.LoggingAdapter
         public IConfiguration Configuration { get; }
         public ILog Log { get; private set; }
         private IHealthNotifier HealthNotifier { get; set; }
-
-        private bool NoSettings { get; set; }
-
+        
         public Startup(IHostingEnvironment env, IConfiguration configuration)
         {
             var builder = new ConfigurationBuilder()
@@ -44,7 +36,6 @@ namespace Lykke.Service.LoggingAdapter
                 .AddEnvironmentVariables();
             Configuration = builder.Build();
             
-            Configuration = configuration;
             Environment = env;
         }
 
@@ -56,7 +47,7 @@ namespace Lykke.Service.LoggingAdapter
                     .AddJsonOptions(options =>
                     {
                         options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter(){CamelCaseText = true});
+                        options.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter{CamelCaseText = true});
                     });
 
                 services.AddSwaggerGen(options =>
@@ -65,39 +56,22 @@ namespace Lykke.Service.LoggingAdapter
                 });
 
                 var builder = new ContainerBuilder();
+                var appSettings = Configuration.LoadSettings<AppSettings>();
 
-                NoSettings = Configuration.GetSection("NoSettings").Get<bool>();
-                if (NoSettings)
-                {
-                    //TODO - register in DI
-                    Log = DirectConsoleLogFactory.Instance.CreateLog(this);
-                }
-                else
-                {
-                    var appSettings = Configuration.LoadSettings<AppSettings>();
-
-
-                    services.AddLykkeHealthNotifications(
-                        appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                        appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName);
-
-                    services.AddLykkeLogging(logging =>
-                    {
-                        logging.AddLykkeConsole();
-                        logging.AddLykkeAzureTable(appSettings.ConnectionString(x => x.LoggingAdapterService.Db.LogsConnString), "LoggingAdapter" + Program.EnvInfo);
-                        logging.AddLykkeEssentialSlackChannels(
-                            appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                            appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName);
-                    });
-
-                }
+                services.AddLykkeLogging(
+                    appSettings.Nested(s => s.LoggingAdapterService.Db.LogsConnString),
+                    "LoggingAdapter",
+                    appSettings.Nested(s => s.SlackNotifications.AzureQueue.ConnectionString).CurrentValue,
+                    appSettings.Nested(s => s.SlackNotifications.AzureQueue.QueueName).CurrentValue);
 
                 builder.Populate(services);
-                builder.RegisterModule(new ServiceModule());
+                builder.RegisterModule(new ServiceModule(appSettings));
                 ApplicationContainer = builder.Build();
+
 
                 Log = ApplicationContainer.Resolve<ILogFactory>().CreateLog(this);
                 HealthNotifier = ApplicationContainer.Resolve<IHealthNotifier>();
+
                 return new AutofacServiceProvider(ApplicationContainer);
             }
             catch (Exception ex)
