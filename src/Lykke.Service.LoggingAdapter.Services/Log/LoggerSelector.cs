@@ -1,5 +1,5 @@
-﻿using Common.Log;
-using Lykke.Common.Log;
+﻿using System;
+using Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 
 namespace Lykke.Service.LoggingAdapter.Services.Log
@@ -10,7 +10,7 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
 
         public LoggerSelector(ILogFactoryStorage logFactoryStorage)
         {
-            _logFactoryStorage = logFactoryStorage;
+            _logFactoryStorage = logFactoryStorage ?? throw new ArgumentNullException(nameof(logFactoryStorage));
         }
 
         public ILog GetLog(string appName, string component)

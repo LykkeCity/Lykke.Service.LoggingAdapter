@@ -2,6 +2,7 @@
 using System.Net;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
+using Lykke.Common.ApiLibrary.Contract;
 using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Contracts.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
@@ -44,7 +45,7 @@ namespace Lykke.Service.LoggingAdapter.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState.CreateErrorResponce());
+                return BadRequest(ErrorResponseFactory.Create(ModelState));
             }
 
             var component = request.Component ?? request.AppName;

@@ -35,8 +35,7 @@ namespace Lykke.Service.LoggingAdapter.Services
                 }
                 catch (Exception ex)
                 {
-                    _log.WriteWarning(nameof(StopAsync), null, $"Unable to stop {item.GetType().Name}", ex);
-                }
+                    _log.Warning($"Unable to stop {item.GetType().Name}", ex);               }
             }
 
             await Task.CompletedTask;

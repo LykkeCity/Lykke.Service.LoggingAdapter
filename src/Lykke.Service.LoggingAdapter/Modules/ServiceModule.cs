@@ -1,25 +1,22 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Autofac;
-using Autofac.Extensions.DependencyInjection;
+using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Services;
 using Lykke.Service.LoggingAdapter.Services.Log;
 using Lykke.Service.LoggingAdapter.Settings;
 using Lykke.SettingsReader;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lykke.Service.LoggingAdapter.Modules
 {
     public class ServiceModule : Module
     {
-        private readonly IServiceCollection _services;
         private readonly IReloadingManager<AppSettings> _appSettings;
 
         public ServiceModule(IReloadingManager<AppSettings> appSettings)
         {
             _appSettings = appSettings;
-            _services = new ServiceCollection();
         }
 
         protected override void Load(ContainerBuilder builder)
@@ -38,8 +35,6 @@ namespace Lykke.Service.LoggingAdapter.Modules
 
             builder.RegisterType<LoggerSelector>()
                 .As<ILoggerSelector>();
-            
-            builder.Populate(_services);
         }
 
         private void RegisterLoggerFactoryStorage(ContainerBuilder builder)
@@ -63,9 +58,11 @@ namespace Lykke.Service.LoggingAdapter.Modules
                     });
             }
 
-            var storageInstance = new LogFactoryStorage(builderSettings);
-
-            builder.RegisterInstance(storageInstance).As<ILogFactoryStorage>();
+            builder.Register(p =>
+            {
+                var context = p.Resolve<IComponentContext>();
+                return new LogFactoryStorage(builderSettings, context.Resolve<ILogFactory>());
+            }).AsSelf().SingleInstance();
         }
     }
 }
