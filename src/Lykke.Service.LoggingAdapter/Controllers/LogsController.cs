@@ -15,11 +15,13 @@ namespace Lykke.Service.LoggingAdapter.Controllers
     public class LogsController:Controller
     {
         private readonly ILoggerSelector _loggerSelector;
+        private readonly IHealthNotifierSender _healthNotifierSender;
         private readonly ILog _log;
 
-        public LogsController(ILoggerSelector loggerSelector, ILogFactory logFactory)
+        public LogsController(ILoggerSelector loggerSelector, ILogFactory logFactory, IHealthNotifierSender healthNotifierSender)
         {
             _loggerSelector = loggerSelector;
+            _healthNotifierSender = healthNotifierSender;
             _log = logFactory.CreateLog(this);
         }
 
@@ -49,6 +51,14 @@ namespace Lykke.Service.LoggingAdapter.Controllers
             }
 
             var component = request.Component ?? request.AppName;
+
+            if (request.LogLevel == LogLevelContract.Monitor)
+            {
+                _healthNotifierSender.SendNotification(request.AppName, request.AppVersion ?? "?", request.EnvInfo ?? "?", request.Message);
+
+                return Ok();
+            }
+
             var log = _loggerSelector.GetLog(request.AppName, component);
 
             if (log == null)

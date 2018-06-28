@@ -35,6 +35,15 @@ namespace Lykke.Service.LoggingAdapter.Modules
 
             builder.RegisterType<LoggerSelector>()
                 .As<ILoggerSelector>();
+
+            builder.RegisterType<HealthNotifierSender>()
+                .As<IHealthNotifierSender>();
+
+            builder.RegisterInstance(new HealthSlackNotificationAzureQueueSettings
+            {
+                SlackAzureQueuesBaseName = _appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName,
+                SlackAzureQueueConnectionString = _appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString
+            }).AsSelf();
         }
 
         private void RegisterLoggerFactoryStorage(ContainerBuilder builder)

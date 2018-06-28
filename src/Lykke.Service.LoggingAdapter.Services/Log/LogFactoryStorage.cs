@@ -21,7 +21,7 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
 
             _logFactories = loggerBuilderSettings.ToDictionary(p => p.AppName, p =>
             {
-                log.Info($"Registering log {p.AppName} -> {p.TableName}");
+                log.Info($"Registering log: {p.AppName} -> {p.TableName}");
 
                 return InitLogFactory(p);
             });

@@ -18,8 +18,6 @@ namespace Lykke.Service.LoggingAdapter.Helpers
                     return Microsoft.Extensions.Logging.LogLevel.Error;
                 case LogLevelContract.Warning:
                     return Microsoft.Extensions.Logging.LogLevel.Warning;
-                case LogLevelContract.Monitor:
-                    return Microsoft.Extensions.Logging.LogLevel.Warning;
                 case LogLevelContract.FatalError:
                     return Microsoft.Extensions.Logging.LogLevel.Critical;
                 default:
