@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Lykke.Service.LoggingAdapter.Core.Services
+﻿namespace Lykke.Service.LoggingAdapter.Services.Log
 {
     public class HealthSlackNotificationAzureQueueSettings
     {
