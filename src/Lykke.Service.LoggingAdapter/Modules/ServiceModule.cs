@@ -62,7 +62,7 @@ namespace Lykke.Service.LoggingAdapter.Modules
             {
                 var context = p.Resolve<IComponentContext>();
                 return new LogFactoryStorage(builderSettings, context.Resolve<ILogFactory>());
-            }).AsSelf().SingleInstance();
+            }).As<ILogFactoryStorage>().SingleInstance();
         }
     }
 }
