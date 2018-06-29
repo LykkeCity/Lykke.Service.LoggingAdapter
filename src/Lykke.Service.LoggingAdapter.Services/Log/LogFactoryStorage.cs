@@ -29,9 +29,9 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
 
         public ILogFactory GetLogFactoryOrDefault(string appName)
         {
-            _logFactories.TryGetValue(appName, out ILogFactory result);
+            _logFactories.TryGetValue(appName, out var result);
 
-            return result ?? EmptyLogFactory.Instance;
+            return result;
         }
 
         private ILogFactory InitLogFactory(LoggerBuilderSettings settings)

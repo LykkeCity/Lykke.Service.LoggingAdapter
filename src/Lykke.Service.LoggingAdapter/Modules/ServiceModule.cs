@@ -33,9 +33,6 @@ namespace Lykke.Service.LoggingAdapter.Modules
 
             RegisterLoggerFactoryStorage(builder);
 
-            builder.RegisterType<LoggerSelector>()
-                .As<ILoggerSelector>();
-
             builder.RegisterType<HealthNotifierSender>()
                 .As<IHealthNotifierSender>();
 

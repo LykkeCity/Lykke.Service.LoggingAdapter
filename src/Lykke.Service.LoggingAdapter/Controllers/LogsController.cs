@@ -14,14 +14,16 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 {
     public class LogsController:Controller
     {
-        private readonly ILoggerSelector _loggerSelector;
         private readonly IHealthNotifierSender _healthNotifierSender;
+        private readonly ILogFactoryStorage _logFactoryStorage;
         private readonly ILog _log;
 
-        public LogsController(ILoggerSelector loggerSelector, ILogFactory logFactory, IHealthNotifierSender healthNotifierSender)
+        public LogsController(ILogFactory logFactory,
+            IHealthNotifierSender healthNotifierSender, 
+            ILogFactoryStorage logFactoryStorage)
         {
-            _loggerSelector = loggerSelector;
             _healthNotifierSender = healthNotifierSender;
+            _logFactoryStorage = logFactoryStorage;
             _log = logFactory.CreateLog(this);
         }
 
@@ -49,24 +51,24 @@ namespace Lykke.Service.LoggingAdapter.Controllers
             {
                 return BadRequest(ErrorResponseFactory.Create(ModelState));
             }
+            
+            var logFactory = _logFactoryStorage.GetLogFactoryOrDefault(request.AppName);
+            if (logFactory == null)
+            {
+                _log.Warning(nameof(Write), $"Logger for appName {request.AppName} not found", context: request);
 
-            var component = request.Component ?? request.AppName;
+                return BadRequest(ErrorResponse.Create($"Logger for  appName {request.AppName} not found"));
+            }
 
             if (request.LogLevel == LogLevelContract.Monitor)
             {
-                _healthNotifierSender.SendNotification(request.AppName, request.AppVersion ?? "?", request.EnvInfo ?? "?", request.Message);
+                _healthNotifierSender.SendNotification(logFactory, request.AppName, request.AppVersion ?? "?", request.EnvInfo ?? "?", request.Message);
 
                 return Ok();
             }
 
-            var log = _loggerSelector.GetLog(request.AppName, component);
-
-            if (log == null)
-            {
-                _log.Warning(nameof(Write),  $"Logger for {request.AppName} not found", context: request);
-                
-                return BadRequest(ErrorResponse.Create($"Log for  appName {request.AppName} not found"));
-            }
+            var component = request.Component ?? request.AppName;
+            var log = logFactory.CreateLog(component);
 
             Exception mockException = null;
             if (!string.IsNullOrEmpty(request.ExceptionType) || !string.IsNullOrEmpty(request.CallStack))
