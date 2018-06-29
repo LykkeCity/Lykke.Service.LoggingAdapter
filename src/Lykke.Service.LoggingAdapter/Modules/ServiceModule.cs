@@ -2,6 +2,7 @@
 using System.Linq;
 using Autofac;
 using Lykke.Common.Log;
+using Lykke.Service.LoggingAdapter.Core.Domain.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Services;
 using Lykke.Service.LoggingAdapter.Services.Log;
@@ -33,8 +34,11 @@ namespace Lykke.Service.LoggingAdapter.Modules
 
             RegisterLoggerFactoryStorage(builder);
 
-            builder.RegisterType<HealthNotifierSender>()
-                .As<IHealthNotifierSender>();
+            builder.RegisterType<HealthNotificationWriter>()
+                .As<IHealthNotificationWriter>();
+
+            builder.RegisterType<LogWriter>()
+                .As<ILogWriter>();
 
             builder.RegisterInstance(new HealthSlackNotificationAzureQueueSettings
             {

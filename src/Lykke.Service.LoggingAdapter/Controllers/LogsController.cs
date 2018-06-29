@@ -1,11 +1,10 @@
-﻿using System;
-using System.Net;
+﻿using System.Net;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Contract;
 using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Contracts.Log;
-using Lykke.Service.LoggingAdapter.Core.Services;
+using Lykke.Service.LoggingAdapter.Core.Domain.Log;
 using Lykke.Service.LoggingAdapter.Helpers;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -14,16 +13,19 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 {
     public class LogsController:Controller
     {
-        private readonly IHealthNotifierSender _healthNotifierSender;
+        private readonly IHealthNotificationWriter _healthNotificationWriter;
         private readonly ILogFactoryStorage _logFactoryStorage;
         private readonly ILog _log;
+        private readonly ILogWriter _logWriter;
 
         public LogsController(ILogFactory logFactory,
-            IHealthNotifierSender healthNotifierSender, 
-            ILogFactoryStorage logFactoryStorage)
+            IHealthNotificationWriter healthNotificationWriter, 
+            ILogFactoryStorage logFactoryStorage,
+            ILogWriter logWriter)
         {
-            _healthNotifierSender = healthNotifierSender;
+            _healthNotificationWriter = healthNotificationWriter;
             _logFactoryStorage = logFactoryStorage;
+            _logWriter = logWriter;
             _log = logFactory.CreateLog(this);
         }
 
@@ -60,39 +62,18 @@ namespace Lykke.Service.LoggingAdapter.Controllers
                 return BadRequest(ErrorResponse.Create($"Logger for  appName {request.AppName} not found"));
             }
 
+            var logInformation = request.MapToLogInformationDto();
             if (request.LogLevel == LogLevelContract.Monitor)
             {
-                _healthNotifierSender.SendNotification(logFactory, request.AppName, request.AppVersion ?? "?", request.EnvInfo ?? "?", request.Message);
+                _healthNotificationWriter.SendNotification(logFactory, logInformation);
 
                 return Ok();
             }
 
-            var component = request.Component ?? request.AppName;
-            var log = logFactory.CreateLog(component);
-
-            Exception mockException = null;
-            if (!string.IsNullOrEmpty(request.ExceptionType) || !string.IsNullOrEmpty(request.CallStack))
-            {
-                mockException = new Exception($"{request.ExceptionType} : {request.CallStack}");
-            }
-
-            //null check is in validation of LogRequest
-            // ReSharper disable once PossibleInvalidOperationException
-            log.Log(request.LogLevel.Value.MapToMicrosoftLoglevel(),
-                0,
-                new LogEntryParameters(request.AppName, 
-                    request.AppVersion, 
-                    request.EnvInfo ?? "?", 
-                    request.CallerFilePath ?? "?", 
-                    request.Process ?? "?", 
-                    request.CallerLineNumber > 0 ? request.CallerLineNumber.Value : 1, 
-                    request.Message,
-                    request.Context,
-                    DateTime.UtcNow), 
-                mockException,
-                (p, e) => p.Message);
+            _logWriter.Write(logFactory, logInformation);
 
             return Ok();
         }
     }
 }
+
