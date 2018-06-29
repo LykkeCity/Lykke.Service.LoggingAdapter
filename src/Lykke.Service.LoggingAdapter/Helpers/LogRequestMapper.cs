@@ -28,7 +28,7 @@ namespace Lykke.Service.LoggingAdapter.Helpers
                 Process = request.Process,
                 Component = request.Component,
                 ExceptionType = request.ExceptionType,
-                AdditionalSlackChannels = request.AdditionalSlackChannels.ToList()
+                AdditionalSlackChannels = request.AdditionalSlackChannels?.ToList()
             };
         }
     }
