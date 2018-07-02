@@ -1,12 +1,13 @@
 ﻿using System;
 using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Core.Domain.Log;
+using Microsoft.Extensions.Logging;
 
 namespace Lykke.Service.LoggingAdapter.Services.Log
 {
     public class LogWriter:ILogWriter
     {
-        public void Write(ILogFactory logFactory, LogInformationDto logInformation)
+        public void Write(ILogFactory logFactory, LogLevel logLevel, LogInformationDto logInformation)
         {
             var log = logFactory.CreateLog(logInformation.Component ?? logInformation.AppName);
 
@@ -16,7 +17,7 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
                 mockException = new Exception($"{logInformation.ExceptionType} : {logInformation.CallStack}");
             }
             
-            log.Log(logInformation.LogLevel,
+            log.Log(logLevel,
                 0,
                 new LogEntryParameters(logInformation.AppName,
                     logInformation.AppVersion,

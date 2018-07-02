@@ -8,7 +8,6 @@ using Lykke.Logs.Loggers.LykkeAzureTable;
 using Lykke.Logs.Loggers.LykkeConsole;
 using Lykke.Logs.Loggers.LykkeSlack;
 using Lykke.Service.LoggingAdapter.Core.Domain.Log;
-using Lykke.Service.LoggingAdapter.Core.Services;
 
 namespace Lykke.Service.LoggingAdapter.Services.Log
 {
@@ -58,10 +57,7 @@ namespace Lykke.Service.LoggingAdapter.Services.Log
 
         public void Dispose()
         {
-            Parallel.ForEach(_logFactories.Values, lf =>
-            {
-                lf.Dispose();
-            });
+            Parallel.ForEach(_logFactories.Values, lf => lf.Dispose());
         }
     }
 }

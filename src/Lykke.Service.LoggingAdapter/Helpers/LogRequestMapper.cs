@@ -9,11 +9,6 @@ namespace Lykke.Service.LoggingAdapter.Helpers
     {
         public static LogInformationDto MapToLogInformationDto(this LogRequest request)
         {
-            if (request.LogLevel == null)
-            {
-                throw new ArgumentNullException(nameof(request.LogLevel));
-            }
-
             return new LogInformationDto
             {
                 AppName = request.AppName,
@@ -22,7 +17,6 @@ namespace Lykke.Service.LoggingAdapter.Helpers
                 CallStack = request.CallStack,
                 Context = request.Context,
                 EnvInfo = request.EnvInfo,
-                LogLevel = request.LogLevel.Value.MapToMicrosoftLoglevel(),
                 CallerFilePath = request.CallerFilePath,
                 CallerLineNumber = request.CallerLineNumber,
                 Process = request.Process,

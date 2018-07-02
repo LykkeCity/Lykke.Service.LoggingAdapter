@@ -1,9 +1,11 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using Common.Log;
 using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Contract;
 using Lykke.Common.Log;
 using Lykke.Service.LoggingAdapter.Contracts.Log;
+using Lykke.Service.LoggingAdapter.Core.Domain.HealthNotification;
 using Lykke.Service.LoggingAdapter.Core.Domain.Log;
 using Lykke.Service.LoggingAdapter.Helpers;
 using Microsoft.AspNetCore.Mvc;
@@ -13,19 +15,23 @@ namespace Lykke.Service.LoggingAdapter.Controllers
 {
     public class LogsController:Controller
     {
+        private readonly ILog _log;
+        private readonly IHealthNotifierStorage _healthNotifierStorage;
         private readonly IHealthNotificationWriter _healthNotificationWriter;
         private readonly ILogFactoryStorage _logFactoryStorage;
-        private readonly ILog _log;
         private readonly ILogWriter _logWriter;
 
         public LogsController(ILogFactory logFactory,
             IHealthNotificationWriter healthNotificationWriter, 
             ILogFactoryStorage logFactoryStorage,
-            ILogWriter logWriter)
+            ILogWriter logWriter,
+            IHealthNotifierStorage healthNotifierStorage)
         {
             _healthNotificationWriter = healthNotificationWriter;
             _logFactoryStorage = logFactoryStorage;
             _logWriter = logWriter;
+            _healthNotifierStorage = healthNotifierStorage;
+
             _log = logFactory.CreateLog(this);
         }
 
@@ -65,12 +71,17 @@ namespace Lykke.Service.LoggingAdapter.Controllers
             var logInformation = request.MapToLogInformationDto();
             if (request.LogLevel == LogLevelContract.Monitor)
             {
-                _healthNotificationWriter.SendNotification(logFactory, logInformation);
+                var healthNotifier = _healthNotifierStorage.GetOrCreateHealthNotifier(request.AppName,
+                    request.AppVersion,
+                    request.EnvInfo, 
+                    logFactory);
+
+                _healthNotificationWriter.SendNotification(healthNotifier, logInformation);
 
                 return Ok();
             }
 
-            _logWriter.Write(logFactory, logInformation);
+            _logWriter.Write(logFactory, request.LogLevel.MapToMicrosoftLoglevel(), logInformation);
 
             return Ok();
         }

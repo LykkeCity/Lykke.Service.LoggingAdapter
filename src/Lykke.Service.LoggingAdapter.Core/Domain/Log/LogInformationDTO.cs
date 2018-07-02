@@ -10,8 +10,6 @@ namespace Lykke.Service.LoggingAdapter.Core.Domain.Log
         public string AppVersion { get; set; }
 
         public string EnvInfo { get; set; }
-        
-        public LogLevel LogLevel { get; set; }
 
         public string Component { get; set; }
 

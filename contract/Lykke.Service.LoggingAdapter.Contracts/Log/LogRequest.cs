@@ -15,7 +15,7 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
 
         [Required]
         [EnumDataType(typeof(LogLevelContract))]
-        public LogLevelContract? LogLevel { get; set; }
+        public LogLevelContract LogLevel { get; set; }
 
         public string Component { get; set; }
 
@@ -60,14 +60,14 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
         {
             var result = new List<ValidationResult>();
 
-            if (LogLevel == null)
+            if (LogLevel == LogLevelContract.None)
             {
                 result.Add(new ValidationResult("Log Level field is required", new[] { nameof(LogLevel) }));
 
                 return result;
             }
             
-            if (NormalLogLevels.Contains(LogLevel.Value))
+            if (NormalLogLevels.Contains(LogLevel))
             {
                 if (string.IsNullOrEmpty(Message))
                 {
@@ -75,7 +75,7 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
                 }
             }
 
-            if (ErrorLogLevels.Contains(LogLevel.Value))
+            if (ErrorLogLevels.Contains(LogLevel))
             {
                 if (string.IsNullOrEmpty(CallStack))
                 {

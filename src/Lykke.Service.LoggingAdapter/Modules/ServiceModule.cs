@@ -2,12 +2,16 @@
 using System.Linq;
 using Autofac;
 using Lykke.Common.Log;
+using Lykke.Logs;
+using Lykke.Service.LoggingAdapter.Core.Domain.HealthNotification;
 using Lykke.Service.LoggingAdapter.Core.Domain.Log;
 using Lykke.Service.LoggingAdapter.Core.Services;
 using Lykke.Service.LoggingAdapter.Services;
+using Lykke.Service.LoggingAdapter.Services.HealthNotification;
 using Lykke.Service.LoggingAdapter.Services.Log;
 using Lykke.Service.LoggingAdapter.Settings;
 using Lykke.SettingsReader;
+using Lykke.SlackNotifications;
 
 namespace Lykke.Service.LoggingAdapter.Modules
 {
@@ -40,11 +44,14 @@ namespace Lykke.Service.LoggingAdapter.Modules
             builder.RegisterType<LogWriter>()
                 .As<ILogWriter>();
 
-            builder.RegisterInstance(new HealthSlackNotificationAzureQueueSettings
-            {
-                SlackAzureQueuesBaseName = _appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName,
-                SlackAzureQueueConnectionString = _appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString
-            }).AsSelf();
+            builder.RegisterType<HealthNotifierStorage>()
+                .As<IHealthNotifierStorage>()
+                .SingleInstance();
+
+            builder.RegisterInstance(CreateSlackNotificationSender(_appSettings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString, 
+                    _appSettings.CurrentValue.SlackNotifications.AzureQueue.QueueName))
+                .As<ISlackNotificationsSender>()
+                .SingleInstance();
         }
 
         private void RegisterLoggerFactoryStorage(ContainerBuilder builder)
@@ -68,11 +75,16 @@ namespace Lykke.Service.LoggingAdapter.Modules
                     });
             }
 
-            builder.Register(p =>
-            {
-                var context = p.Resolve<IComponentContext>();
-                return new LogFactoryStorage(builderSettings, context.Resolve<ILogFactory>());
-            }).As<ILogFactoryStorage>().SingleInstance();
+            builder.Register(p => new LogFactoryStorage(builderSettings, p.Resolve<ILogFactory>()))
+                .As<ILogFactoryStorage>()
+                .SingleInstance();
+        }
+
+        private ISlackNotificationsSender CreateSlackNotificationSender(string slackAzureQueueConnectionString,string slackAzureQueuesBaseName)
+        {
+            var factory = new HealthNotifierSlackSenderFactory();
+
+            return factory.Create(slackAzureQueueConnectionString, slackAzureQueuesBaseName);
         }
     }
 }
