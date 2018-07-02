@@ -14,20 +14,7 @@ namespace Lykke.Service.LoggingAdapter.Services.HealthNotification
 
         private string PrepareHealthMessage(LogInformationDto source)
         {
-            var propsDesctiptions = new []
-            {
-                (propName: "component", propValue: source.Component),
-                (propName: "process", propValue: source.Process),
-                (propName: "callerLineNumber", propValue: source.CallerLineNumber?.ToString()),
-                (propName: "callerFilePath", propValue: source.CallerFilePath),
-                (propName: "message", propValue: source.Message),
-                (propName: "callStack", propValue: source.CallStack),
-                (propName: "exceptionType", propValue: source.ExceptionType),
-            }
-            .Where(p => !string.IsNullOrEmpty(p.propValue))
-            .Select(p => $"{p.propName} : {p.propValue}");
-
-            return string.Join(" | ", propsDesctiptions);
+            return source.Message;
         }
     }
 }

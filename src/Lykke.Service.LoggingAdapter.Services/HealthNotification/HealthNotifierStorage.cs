@@ -11,14 +11,14 @@ namespace Lykke.Service.LoggingAdapter.Services.HealthNotification
 {
     public class HealthNotifierStorage: IHealthNotifierStorage, IDisposable
     {
-        private readonly ConcurrentDictionary<HealthNotifierBuilderSettings, IHealthNotifier> _healthNotifiers;
+        private readonly ConcurrentDictionary<HealthNotifierBuilderSettings, Lazy<IHealthNotifier>> _healthNotifiers;
         private readonly ILog _log;
         private readonly ISlackNotificationsSender _slackNotificationsSender;
 
         public HealthNotifierStorage(ILogFactory logFactory, ISlackNotificationsSender slackNotificationsSender)
         {
             _slackNotificationsSender = slackNotificationsSender;
-            _healthNotifiers = new ConcurrentDictionary<HealthNotifierBuilderSettings, IHealthNotifier>();
+            _healthNotifiers = new ConcurrentDictionary<HealthNotifierBuilderSettings, Lazy<IHealthNotifier>>();
             _log = logFactory.CreateLog(this);
         }
 
@@ -28,10 +28,13 @@ namespace Lykke.Service.LoggingAdapter.Services.HealthNotification
 
             return _healthNotifiers.GetOrAdd(builderSettings, p =>
             {
-                _log.Info($"Registering health notifier: appName {p.AppName}, appVersion {p.AppVersion}, envInfo {p.EnvInfo}");
+                return new Lazy<IHealthNotifier>(() =>
+                {
+                    _log.Info($"Registering health notifier: appName {p.AppName}, appVersion {p.AppVersion}, envInfo {p.EnvInfo}");
 
-                return BuildHealthNotifier(builderSettings, logFactory);
-            });
+                    return BuildHealthNotifier(builderSettings, logFactory);
+                }); 
+            }).Value;
         }
 
         private IHealthNotifier BuildHealthNotifier(HealthNotifierBuilderSettings builderSettings, ILogFactory logFactory)
@@ -45,7 +48,7 @@ namespace Lykke.Service.LoggingAdapter.Services.HealthNotification
 
         public void Dispose()
         {
-            Parallel.ForEach(_healthNotifiers.Values, p => p.Dispose());
+            Parallel.ForEach(_healthNotifiers.Values, p => p.Value.Dispose());
         }
     }
 }
