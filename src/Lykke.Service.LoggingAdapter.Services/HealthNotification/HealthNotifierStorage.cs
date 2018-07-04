@@ -41,7 +41,7 @@ namespace Lykke.Service.LoggingAdapter.Services.HealthNotification
         {
             return new HealthNotifier(builderSettings.AppName, 
                 builderSettings.AppVersion, 
-                builderSettings.EnvInfo, 
+                builderSettings.EnvInfo ?? "?", 
                 logFactory, 
                 _slackNotificationsSender);
         }
