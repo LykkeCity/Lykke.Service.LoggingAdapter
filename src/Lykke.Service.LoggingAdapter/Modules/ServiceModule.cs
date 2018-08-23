@@ -31,6 +31,7 @@ namespace Lykke.Service.LoggingAdapter.Modules
                 .SingleInstance();
 
             builder.RegisterType<StartupManager>()
+                .WithParameter(TypedParameter.From(_appSettings.CurrentValue.LoggingAdapterService.LogInitionMaxDegreeOfParallelism))
                 .As<IStartupManager>();
 
             builder.RegisterType<ShutdownManager>()
