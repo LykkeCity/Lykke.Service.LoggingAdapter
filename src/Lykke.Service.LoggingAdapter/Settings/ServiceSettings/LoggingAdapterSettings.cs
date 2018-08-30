@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using JetBrains.Annotations;
+using Lykke.SettingsReader.Attributes;
 
 namespace Lykke.Service.LoggingAdapter.Settings.ServiceSettings
 {
@@ -9,5 +10,8 @@ namespace Lykke.Service.LoggingAdapter.Settings.ServiceSettings
         public DbSettings Db { get; set; }
 
         public IEnumerable<LogSettings> Loggers { get; set; }
+
+        [Optional]
+        public int LogInitionMaxDegreeOfParallelism { get; set; } = 3;
     }
 }
