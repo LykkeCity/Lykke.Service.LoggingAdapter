@@ -75,19 +75,6 @@ namespace Lykke.Service.LoggingAdapter.Contracts.Log
                 }
             }
 
-            if (ErrorLogLevels.Contains(LogLevel))
-            {
-                if (string.IsNullOrEmpty(CallStack))
-                {
-                    result.Add(new ValidationResult($"Callstack is required when loglevel {LogLevel} used", new[] { nameof(CallStack) }));
-                }
-
-                if (string.IsNullOrEmpty(ExceptionType))
-                {
-                    result.Add(new ValidationResult($"ExceptionType is required when loglevel {LogLevel} used", new[] { nameof(ExceptionType) }));
-                }
-            }
-
             return result;
         }
 
